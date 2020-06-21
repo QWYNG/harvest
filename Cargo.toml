@@ -5,6 +5,7 @@ authors = ["QWYNG <ikusawasi@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "CLI application that does your git stashes finds"
+repository = "https://github.com/QWYNG/harvest"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
