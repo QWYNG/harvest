@@ -1,6 +1,18 @@
 use std::cmp;
 use std::collections::HashMap;
 
+#[test]
+fn test_search_finds_pattern_from_str() {
+    assert_eq!(Some(5), search("valorant", "an"));
+    assert_eq!(Some(0), search("valorant", "v"));
+    assert_eq!(Some(7), search("valorant", "t"));
+}
+
+#[test]
+fn test_search_returns_none_when_not_found_pattern() {
+    assert_eq!(None, search("valorant", "lol"))
+}
+
 pub fn search(str: &str, pattern: &str) -> Option<usize> {
     let shift_table = create_shift_table(pattern);
 
@@ -38,6 +50,15 @@ pub fn search(str: &str, pattern: &str) -> Option<usize> {
     None
 }
 
+#[test]
+fn test_create_shift_table_returns_shift_table() {
+    let mut map = HashMap::new();
+    map.insert('a', 3);
+    map.insert('b', 1);
+    map.insert('c', 0);
+    assert_eq!(map, create_shift_table(&String::from("abbc")))
+}
+
 fn create_shift_table(str: &str) -> HashMap<char, usize> {
     let mut table = HashMap::new();
     let length = str.len();
@@ -46,30 +67,4 @@ fn create_shift_table(str: &str) -> HashMap<char, usize> {
     }
 
     table
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn search_finds_pattern_from_str() {
-        assert_eq!(Some(5), search("valorant", "an"));
-        assert_eq!(Some(0), search("valorant", "v"));
-        assert_eq!(Some(7), search("valorant", "t"));
-    }
-
-    #[test]
-    fn search_returns_none_when_not_found_pattern() {
-        assert_eq!(None, search("valorant", "lol"))
-    }
-
-    #[test]
-    fn create_shift_table_returns_shift_table() {
-        let mut map = HashMap::new();
-        map.insert('a', 3);
-        map.insert('b', 1);
-        map.insert('c', 0);
-        assert_eq!(map, create_shift_table(&String::from("abbc")))
-    }
 }
