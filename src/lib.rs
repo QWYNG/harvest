@@ -15,6 +15,30 @@ pub struct Arg {
     pattern: String,
 }
 
+pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
+    let stashes_diff_map = create_stashes_diff_map()?;
+
+    let mut matched_stashes: Vec<&str> = Vec::new();
+
+    for (stash, diff) in stashes_diff_map.iter() {
+        match bm::search(diff, &arg.pattern) {
+            Some(_i) => matched_stashes.push(stash),
+            None => continue,
+        }
+    }
+
+    Ok(print_stashes(matched_stashes)?)
+}
+
+fn execute_git_command(command: &str) -> io::Result<Output> {
+    let git_command = format!("git {}", command);
+    if cfg!(target_os = "windows") {
+        Command::new("cmd").arg("/C").arg(git_command).output()
+    } else {
+        Command::new("sh").arg("-c").arg(git_command).output()
+    }
+}
+
 #[derive(Debug, Clone)]
 struct NoStashError;
 
@@ -30,59 +54,44 @@ impl Error for NoStashError {
     }
 }
 
-pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
-    let oldest_stash = String::from_utf8(execute_git_command("stash list")?.stdout)?
-        .lines()
-        .last()
-        .ok_or(NoStashError)?
-        .to_string();
-    let oldest_stash_number = Regex::new(r"\d+")
-        .unwrap()
-        .captures(&oldest_stash)
-        .ok_or(NoStashError)?[0]
-        .parse::<usize>()?;
+fn create_stashes_diff_map() -> Result<HashMap<String, String>, Box<dyn Error>> {
+    let stash_lists = String::from_utf8(execute_git_command("stash list")?.stdout)?;
 
-    let map = create_stashes_diff_map(oldest_stash_number)?;
-
-    let mut matched_stash_numbers: Vec<usize> = Vec::new();
-
-    for (k, v) in map.iter() {
-        match bm::search(v, &arg.pattern) {
-            Some(_i) => matched_stash_numbers.push(*k),
-            None => continue,
-        }
+    if stash_lists.len() == 0 {
+        return Err(Box::new(NoStashError));
     }
 
-    Ok(print_stashes(matched_stash_numbers)?)
-}
-
-fn execute_git_command(command: &str) -> io::Result<Output> {
-    let git_command = format!("git {}", command);
-    if cfg!(target_os = "windows") {
-        Command::new("cmd").arg("/C").arg(git_command).output()
-    } else {
-        Command::new("sh").arg("-c").arg(git_command).output()
-    }
-}
-
-fn create_stashes_diff_map(max: usize) -> Result<HashMap<usize, String>, Box<dyn Error>> {
     let mut map = HashMap::new();
 
-    for i in 0..(max + 1) {
-        let diff_command = format!("diff stash@{{{}}}", i);
+    for stash in stash_lists.lines() {
+        let stash_number = capture_first_number(stash).unwrap();
+        let diff_command = format!("diff stash@{{{}}}", stash_number);
         let result = String::from_utf8(execute_git_command(&diff_command)?.stdout)?;
-        map.insert(i, result);
+        map.insert(stash.to_string(), result);
     }
 
     Ok(map)
 }
 
-fn print_stashes(stashes_numbers: Vec<usize>) -> Result<(), Box<dyn Error>> {
-    for stash_number in stashes_numbers {
-        let command = format!("stash show stash@{{{}}}", stash_number);
+fn capture_first_number(str: &str) -> Option<usize> {
+    let regex = Regex::new(r"\d+").unwrap();
+
+    match regex.captures(&str) {
+        Some(captures) => Some(captures[0].parse::<usize>().unwrap()),
+        None => None,
+    }
+}
+
+fn print_stashes(mut stashes: Vec<&str>) -> Result<(), Box<dyn Error>> {
+    stashes.sort();
+    for stash in stashes {
+        let command = format!(
+            "stash show stash@{{{}}}",
+            capture_first_number(stash).unwrap()
+        );
         let show_stash_output = execute_git_command(&command)?;
 
-        println!("stash@{{{}}}", stash_number);
+        println!("{}", stash);
         println!("{}", String::from_utf8(show_stash_output.stdout)?)
     }
 
