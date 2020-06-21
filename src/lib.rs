@@ -73,6 +73,11 @@ fn create_stashes_diff_map() -> Result<HashMap<String, String>, Box<dyn Error>> 
     Ok(map)
 }
 
+#[test]
+fn test_capture_first_number() {
+    assert_eq!(Some(11), capture_first_number("stash@{11}"))
+}
+
 fn capture_first_number(str: &str) -> Option<usize> {
     let regex = Regex::new(r"\d+").unwrap();
 
