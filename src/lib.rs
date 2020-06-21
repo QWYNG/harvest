@@ -6,12 +6,13 @@ use std::fmt;
 use std::io;
 use std::process::{Command, Output};
 use std::str;
+mod bm;
 
 #[derive(Clap)]
 #[clap(version = "1.0")]
 pub struct Arg {
-    /// regexp to grep
-    regexp: String,
+    /// pattern to search
+    pattern: String,
 }
 
 #[derive(Debug, Clone)]
@@ -30,19 +31,29 @@ impl Error for NoStashError {
 }
 
 pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
-    let oldest_stash = str::from_utf8(&execute_git_command("stash list")?.stdout)?
+    let oldest_stash = String::from_utf8(execute_git_command("stash list")?.stdout)?
         .lines()
         .last()
         .ok_or(NoStashError)?
         .to_string();
-    let oldest_stash_number = Regex::new(r"\d+")?
+    let oldest_stash_number = Regex::new(r"\d+")
+        .unwrap()
         .captures(&oldest_stash)
         .ok_or(NoStashError)?[0]
-        .parse::<i32>()?;
+        .parse::<usize>()?;
 
     let map = create_stashes_diff_map(oldest_stash_number)?;
 
-    Ok(println!("{:#?}", map))
+    let mut matched_stash_numbers: Vec<usize> = Vec::new();
+
+    for (k, v) in map.iter() {
+        match bm::search(v, &arg.pattern) {
+            Some(_i) => matched_stash_numbers.push(*k),
+            None => continue,
+        }
+    }
+
+    Ok(print_stashes(matched_stash_numbers)?)
 }
 
 fn execute_git_command(command: &str) -> io::Result<Output> {
@@ -54,14 +65,26 @@ fn execute_git_command(command: &str) -> io::Result<Output> {
     }
 }
 
-fn create_stashes_diff_map(max: i32) -> Result<HashMap<i32, String>, Box<dyn Error>> {
+fn create_stashes_diff_map(max: usize) -> Result<HashMap<usize, String>, Box<dyn Error>> {
     let mut map = HashMap::new();
 
     for i in 0..(max + 1) {
         let diff_command = format!("diff stash@{{{}}}", i);
-        let result = str::from_utf8(&execute_git_command(&diff_command)?.stdout)?.to_string();
+        let result = String::from_utf8(execute_git_command(&diff_command)?.stdout)?;
         map.insert(i, result);
     }
 
     Ok(map)
+}
+
+fn print_stashes(stashes_numbers: Vec<usize>) -> Result<(), Box<dyn Error>> {
+    for stash_number in stashes_numbers {
+        let command = format!("stash show stash@{{{}}}", stash_number);
+        let show_stash_output = execute_git_command(&command)?;
+
+        println!("stash@{{{}}}", stash_number);
+        println!("{}", String::from_utf8(show_stash_output.stdout)?)
+    }
+
+    Ok(())
 }
