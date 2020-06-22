@@ -9,7 +9,7 @@ use std::str;
 mod bm;
 
 #[derive(Clap)]
-#[clap(version = "1.0")]
+#[clap(version = env!("CARGO_PKG_VERSION"))]
 pub struct Arg {
     /// pattern to search
     pattern: String,
@@ -18,11 +18,11 @@ pub struct Arg {
 pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
     let stashes_diff_map = create_stashes_diff_map()?;
 
-    let mut matched_stashes: Vec<&str> = Vec::new();
+    let mut matched_stashes: Vec<(usize, &str)> = Vec::new();
 
-    for (stash, diff) in stashes_diff_map.iter() {
+    for ((number, stash), diff) in stashes_diff_map.iter() {
         match bm::search(diff, &arg.pattern) {
-            Some(_i) => matched_stashes.push(stash),
+            Some(_i) => matched_stashes.push((*number, stash)),
             None => continue,
         }
     }
@@ -54,7 +54,7 @@ impl Error for NoStashError {
     }
 }
 
-fn create_stashes_diff_map() -> Result<HashMap<String, String>, Box<dyn Error>> {
+fn create_stashes_diff_map() -> Result<HashMap<(usize, String), String>, Box<dyn Error>> {
     let stash_lists = String::from_utf8(execute_git_command("stash list")?.stdout)?;
 
     if stash_lists.len() == 0 {
@@ -67,7 +67,7 @@ fn create_stashes_diff_map() -> Result<HashMap<String, String>, Box<dyn Error>> 
         let stash_number = capture_first_number(stash).unwrap();
         let diff_command = format!("diff stash@{{{}}}", stash_number);
         let result = String::from_utf8(execute_git_command(&diff_command)?.stdout)?;
-        map.insert(stash.to_string(), result);
+        map.insert((stash_number, stash.to_string()), result);
     }
 
     Ok(map)
@@ -87,13 +87,10 @@ fn capture_first_number(str: &str) -> Option<usize> {
     }
 }
 
-fn print_stashes(mut stashes: Vec<&str>) -> Result<(), Box<dyn Error>> {
-    stashes.sort();
-    for stash in stashes {
-        let command = format!(
-            "stash show stash@{{{}}}",
-            capture_first_number(stash).unwrap()
-        );
+fn print_stashes(mut stashes: Vec<(usize, &str)>) -> Result<(), Box<dyn Error>> {
+    stashes.sort_by(|a, b| (a.0).cmp(&b.0));
+    for (number, stash) in stashes {
+        let command = format!("stash show stash@{{{}}}", number);
         let show_stash_output = execute_git_command(&command)?;
 
         println!("{}", stash);
