@@ -1,7 +1,15 @@
 # harvest 
-![Rust](https://github.com/QWYNG/harvest/workflows/Rust/badge.svg?branch=master)
-
+![Regression](https://github.com/QWYNG/harvest/workflows/Regression/badge.svg)
 CLI application that does your git stashes finds
+
+## Install
+- cargo  
+`cargo install harvest`
+- Homebrew  
+`brew tap QWYNG/harvest`  
+`brew install harvest`
+
+## How to use
 ```
 USAGE:
     harvest <pattern>
