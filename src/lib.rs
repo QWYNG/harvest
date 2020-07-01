@@ -32,11 +32,7 @@ pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
 
 fn execute_git_command(command: &str) -> io::Result<Output> {
     let git_command = format!("git {}", command);
-    if cfg!(target_os = "windows") {
-        Command::new("cmd").arg("/C").arg(git_command).output()
-    } else {
-        Command::new("sh").arg("-c").arg(git_command).output()
-    }
+    Command::new("sh").arg("-c").arg(git_command).output()
 }
 
 #[derive(Debug, Clone)]
@@ -65,7 +61,7 @@ fn create_stashes_diff_map() -> Result<HashMap<(usize, String), String>, Box<dyn
 
     for stash in stash_lists.lines() {
         let stash_number = capture_first_number(stash).unwrap();
-        let diff_command = format!("diff stash@{{{}}}", stash_number);
+        let diff_command = format!("stash show -p stash@{{{}}}", stash_number);
         let result = String::from_utf8(execute_git_command(&diff_command)?.stdout)?;
         map.insert((stash_number, stash.to_string()), result);
     }
