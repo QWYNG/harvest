@@ -32,11 +32,7 @@ pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
 
 fn execute_git_command(command: &str) -> io::Result<Output> {
     let git_command = format!("git {}", command);
-    if cfg!(target_os = "windows") {
-        Command::new("cmd").arg("/C").arg(git_command).output()
-    } else {
-        Command::new("sh").arg("-c").arg(git_command).output()
-    }
+    Command::new("sh").arg("-c").arg(git_command).output()
 }
 
 #[derive(Debug, Clone)]
