@@ -65,7 +65,7 @@ fn create_stashes_diff_map() -> Result<HashMap<(usize, String), String>, Box<dyn
 
     for stash in stash_lists.lines() {
         let stash_number = capture_first_number(stash).unwrap();
-        let diff_command = format!("diff stash@{{{}}}", stash_number);
+        let diff_command = format!("stash show -p stash@{{{}}}", stash_number);
         let result = String::from_utf8(execute_git_command(&diff_command)?.stdout)?;
         map.insert((stash_number, stash.to_string()), result);
     }
