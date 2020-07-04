@@ -11,7 +11,8 @@ pub struct Arg {
 }
 
 pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
-    let mut stashes = git_stash::get_stashes()?;
+    let executor = git_stash::GitStashExecutor::new();
+    let mut stashes = git_stash::get_stashes(executor)?;
 
     stashes.sort();
     for stash in stashes {
