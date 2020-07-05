@@ -105,3 +105,83 @@ pub fn get_stashes(executor: impl GitStashExecutable) -> Result<Vec<GitStash>, B
         .collect();
     Ok(stashes)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockStashExecutor;
+    impl MockStashExecutor {
+        fn new() -> MockStashExecutor {
+            MockStashExecutor {}
+        }
+    }
+    impl GitStashExecutable for MockStashExecutor {
+        fn execute_git_stash_command(&self, _command: &str) -> Result<Vec<u8>, GitError> {
+            let sample =
+                b"stash@{0}: WIP on refactor: cddaae4 refactor create git_stash module".to_vec();
+            Ok(sample)
+        }
+        fn stash_show(&self, _n: usize) -> Result<Vec<u8>, GitError> {
+            let sample = br#" Cargo.lock   | 21 +++++++++++++++++++++
+             Cargo.toml       |  1 +
+             src/git_stash.rs |  8 ++++++++
+             3 files changed, 30 insertions(+)
+            "#
+            .to_vec();
+            Ok(sample)
+        }
+        fn stash_patch_show(&self, _n: usize) -> Result<Vec<u8>, GitError> {
+            let sample = br#"diff --git a/Cargo.lock b/Cargo.lock
+            index 295fdbb..6d9592b 100644
+            --- a/Cargo.lock
+            +++ b/Cargo.lock
+            @@ -87,6 +87,7 @@ name = "harvest"
+             version = "0.1.2"
+             dependencies = [
+              "clap",
+            + "mocktopus",
+              "pager",
+             ]
+            "#
+            .to_vec();
+
+            Ok(sample)
+        }
+    }
+
+    #[test]
+    fn test_git_stash_new() {
+        let mock_executor = MockStashExecutor::new();
+        let list_output =
+            String::from_utf8(mock_executor.execute_git_stash_command("list").unwrap()).unwrap();
+        let git_stash = GitStash::new(&mock_executor, 0, list_output).unwrap();
+
+        assert_eq!(
+            GitStash {
+                number: 0,
+                list_output: "stash@{0}: WIP on refactor: cddaae4 refactor create git_stash module"
+                    .to_string(),
+                show_output: String::from_utf8(mock_executor.stash_show(0).unwrap()).unwrap(),
+                patch_show_output: String::from_utf8(mock_executor.stash_patch_show(0).unwrap())
+                    .unwrap(),
+            },
+            git_stash
+        )
+    }
+
+    #[test]
+    fn test_get_stashes() {
+        let mock_executor = MockStashExecutor::new();
+        let v = vec![GitStash {
+            number: 0,
+            list_output: "stash@{0}: WIP on refactor: cddaae4 refactor create git_stash module"
+                .to_string(),
+            show_output: String::from_utf8(mock_executor.stash_show(0).unwrap()).unwrap(),
+            patch_show_output: String::from_utf8(mock_executor.stash_patch_show(0).unwrap())
+                .unwrap(),
+        }];
+
+        assert_eq!(v, get_stashes(mock_executor).unwrap())
+    }
+}
