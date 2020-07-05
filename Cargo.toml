@@ -1,6 +1,6 @@
 [package]
 name = "harvest"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["QWYNG <ikusawasi@gmail.com>"]
 edition = "2018"
 license = "MIT"
