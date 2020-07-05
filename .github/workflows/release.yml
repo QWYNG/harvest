@@ -33,11 +33,24 @@ jobs:
         if: matrix.os == 'macOS-latest'
         run: make release_mac
       - name: Release
+        id: release
         uses: softprops/action-gh-release@v1
         with:
           files: '*.tar.gz'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set version
+        id: set_version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+        env:
+          GITHUB_REF:  ${{ github.ref }}
+      - name: set SHA256
+        id: sha_256
+        run: |
+          wget https://github.com/QWYNG/harvest/releases/download/$VERSION/harvest-$VERSION-x86_64-mac.tar.gz -O mac_release.tar.gz
+          echo "::set-output name=sha::$(shasum -a 256 mac_release.tar.gz |awk '{print $1}')"
+        env:
+          VERSION: ${{ steps.set_version.outputs.version }}
       - name: Dispatch homebrew Repo update
         if: matrix.os == 'macOS-latest'
         uses: peter-evans/repository-dispatch@v1
@@ -45,4 +58,4 @@ jobs:
           token: ${{ secrets.HOMEBREW_REPO_GITHUB_TOKEN }}
           repository: QWYNG/homebrew-harvest
           event-type: update
-          client-payload: '{"version": "${{ github.ref }}"}'
+          client-payload: '{"version": "${{ steps.set_version.outputs.version }}", "sha": "${{ steps.sha_256.outputs.sha }}" }'
