@@ -39,10 +39,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Dispatch homebrew Repo update
-        run: |
-          VERSION = $(patsubst "%",%, $(word 3, $(shell grep version Cargo.toml)))
-          $ curl -vv \
-            -H "Authorization: token ${{ secrets.HOMEBREW_REPO_GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.everest-preview+json" \
-            "https://api.github.com/repos/QWYNG/homebrew-harvest/dispatches" \
-            -d '{"event_type": "build", "client_payload": {"version": ${{ github.ref }}'
+        if: matrix.os == 'macOS-latest'
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.HOMEBREW_REPO_GITHUB_TOKEN }}
+          repository: QWYNG/homebrew-harvest
+          event-type: update
+          client-payload: '{"version": "${{ github.ref }}"}'
