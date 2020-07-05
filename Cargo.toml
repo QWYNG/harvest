@@ -12,3 +12,4 @@ readme = "README.md"
 [dependencies]
 clap = "3.0.0-beta.1"
 pager = "0.15.0"
+assert_cmd = "1.0.1"
