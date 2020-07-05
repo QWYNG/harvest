@@ -36,7 +36,7 @@ jobs:
         id: release
         uses: softprops/action-gh-release@v1
         with:
-          files: '*.tar.gz'
+          files: '*.zip'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set version
@@ -47,8 +47,8 @@ jobs:
       - name: set SHA256
         id: sha_256
         run: |
-          wget https://github.com/QWYNG/harvest/releases/download/$VERSION/harvest-$VERSION-x86_64-mac.tar.gz -O mac_release.tar.gz
-          echo "::set-output name=sha::$(shasum -a 256 mac_release.tar.gz |awk '{print $1}')"
+          wget https://github.com/QWYNG/harvest/releases/download/$VERSION/harvest-$VERSION-x86_64-mac.zip -O mac_release.zip
+          echo "::set-output name=sha::$(shasum -a 256 mac_release.zip |awk '{print $1}')"
         env:
           VERSION: ${{ steps.set_version.outputs.version }}
       - name: Dispatch homebrew Repo update
