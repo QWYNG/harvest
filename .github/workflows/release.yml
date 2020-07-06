@@ -40,11 +40,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set version
+        if: matrix.os == 'macOS-latest'
         id: set_version
         run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
         env:
           GITHUB_REF:  ${{ github.ref }}
       - name: set SHA256
+        if: matrix.os == 'macOS-latest'
         id: sha_256
         run: |
           wget https://github.com/QWYNG/harvest/releases/download/$VERSION/harvest-$VERSION-x86_64-mac.zip -O mac_release.zip
