@@ -26,18 +26,25 @@ jobs:
         run: |
           rustup target add x86_64-unknown-linux-musl
           sudo apt-get -qq install musl-tools
-      - name: Build for linux
-        if: matrix.os == 'ubuntu-latest'
-        run: make release_lnx
-      - name: Build for macOS
-        if: matrix.os == 'macOS-latest'
-        run: make release_mac
       - name: Set version
-        if: matrix.os == 'macOS-latest'
         id: set_version
         run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
         env:
           GITHUB_REF:  ${{ github.ref }}
+      - name: Build for linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo build --release --target=x86_64-unknown-linux-musl
+          zip -j harvest-${VERSION}-x86_64-lnx.zip target/x86_64-unknown-linux-musl/release/harvest
+        env:
+          VERSION: ${{ steps.set_version.outputs.version }}
+      - name: Build for macOS
+        if: matrix.os == 'macOS-latest'
+        run: |
+          cargo build --release --target=x86_64-apple-darwin
+          zip -j harvest-${VERSION}-x86_64-mac.zip target/x86_64-apple-darwin/release/harvest
+        env:
+          VERSION: ${{ steps.set_version.outputs.version }}
       - name: set SHA256
         if: matrix.os == 'macOS-latest'
         id: sha_256
