@@ -45,7 +45,7 @@ jobs:
           zip -j harvest-${VERSION}-x86_64-mac.zip target/x86_64-apple-darwin/release/harvest
         env:
           VERSION: ${{ steps.set_version.outputs.version }}
-      - name: set SHA256
+      - name: Set SHA256
         if: matrix.os == 'macOS-latest'
         id: sha_256
         run: |
