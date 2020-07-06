@@ -6,8 +6,8 @@ mod bm;
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 pub struct Arg {
-    /// pattern to search
-    pattern: String,
+    /// string to search
+    string: String,
 }
 
 pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
@@ -16,7 +16,7 @@ pub fn run(arg: Arg) -> Result<(), Box<dyn Error>> {
 
     stashes.sort();
     for stash in stashes {
-        match bm::search(&stash.patch_show_output, &arg.pattern) {
+        match bm::search(&stash.patch_show_output, &arg.string) {
             Some(_) => println!("{}", stash),
             None => continue,
         }
