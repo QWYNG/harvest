@@ -32,13 +32,6 @@ jobs:
       - name: Build for macOS
         if: matrix.os == 'macOS-latest'
         run: make release_mac
-      - name: Release
-        id: release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: '*.zip'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set version
         if: matrix.os == 'macOS-latest'
         id: set_version
@@ -49,10 +42,16 @@ jobs:
         if: matrix.os == 'macOS-latest'
         id: sha_256
         run: |
-          wget https://github.com/QWYNG/harvest/releases/download/$VERSION/harvest-$VERSION-x86_64-mac.zip -O mac_release.zip
-          echo "::set-output name=sha::$(shasum -a 256 mac_release.zip |awk '{print $1}')"
+          echo "::set-output name=sha::$(shasum -a 256 harvest-${VERSION}-x86_64-mac.zip |awk '{print $1}')"
         env:
           VERSION: ${{ steps.set_version.outputs.version }}
+      - name: Release
+        id: release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: '*.zip'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Dispatch homebrew Repo update
         if: matrix.os == 'macOS-latest'
         uses: peter-evans/repository-dispatch@v1
