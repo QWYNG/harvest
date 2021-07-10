@@ -1,7 +1,7 @@
 mod git_stash;
+mod bm;
 use clap::Clap;
 use std::error::Error;
-mod bm;
 
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]

@@ -1,6 +1,4 @@
-extern crate harvest;
-extern crate pager;
-use clap::derive::Clap;
+use clap::Clap;
 use harvest::Arg;
 use pager::Pager;
 
